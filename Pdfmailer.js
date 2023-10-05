@@ -4,6 +4,7 @@ const nodemailer = require("nodemailer");
 
 async function generatePDF(data) {
   const browser = await puppeteer.launch({
+    headless: "new",
     executablePath: "/path/to/chromium",
   });
   const page = await browser.newPage();
