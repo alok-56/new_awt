@@ -3,7 +3,7 @@ const fs = require("fs");
 const nodemailer = require("nodemailer");
 
 async function generatePDF(data) {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ headless: "new" });
   const page = await browser.newPage();
 
   // Load the HTML template and replace placeholders with data
