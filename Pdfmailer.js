@@ -1,28 +1,36 @@
-const puppeteer = require("puppeteer");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
+const pdf = require("html-pdf");
+const PdfTemplate = require("./PdfTemplate");
+
 
 async function generatePDF(data) {
-  const browser = await puppeteer.launch({
-    headless: "new",
-    executablePath: '/path/to/chrome-executable'
+  const htmlContent = PdfTemplate(data);
+  const pdfOptions = {
+    format: "Letter",
+    margin: {
+      top: "10mm",
+      right: "10mm",
+      bottom: "10mm",
+      left: "10mm",
+    },
+  };
+
+  const pdfPath = "generated.pdf"; // Path to save the generated PDF
+  await new Promise((resolve, reject) => {
+    pdf.create(htmlContent, pdfOptions).toFile(pdfPath, (err) => {
+      if (err) {
+        console.error("PDF generation error:", err);
+        return reject(err);
+      }
+      resolve();
+    });
   });
-  const page = await browser.newPage();
 
-  // Load the HTML template and replace placeholders with data
-  const htmlContent = fs.readFileSync("template.html", "utf8");
-  const filledHtml = htmlContent
-    .replace("{{title}}", data.title)
-    .replace("{{content}}", data.content);
+  // Read PDF file
+  const pdfBytes = fs.readFileSync(pdfPath);
 
-  await page.setContent(filledHtml);
-
-  // Generate the PDF
-  const pdfBuffer = await page.pdf();
-
-  await browser.close();
-
-  return pdfBuffer;
+  return pdfBytes;
 }
 
 async function sendEmail(pdfBuffer, recipientEmail) {
@@ -41,7 +49,7 @@ async function sendEmail(pdfBuffer, recipientEmail) {
     text: "Please find the attached PDF.",
     attachments: [
       {
-        filename: "document.pdf",
+        filename: "generated.pdf",
         content: pdfBuffer,
       },
     ],
